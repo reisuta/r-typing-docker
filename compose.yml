@@ -1,0 +1,85 @@
+services:
+  db:
+    image: mysql:5.7.39-debian
+    volumes:
+      - ./r-typing-api/tmp/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    platform: linux/amd64
+  api:
+    build:
+      context: ./dockers/api
+      dockerfile: Dockerfile
+    command: /bin/bash -c 'rm -rf tmp/pids/server.pid; bundle exec rails s -b 0.0.0.0'
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./r-typing-api:/myapp
+      - public-data:/myapp/public
+      - tmp-data:/myapp/tmp
+      - socket-data:/myapp/socket
+      - log-data:/myapp/log
+    ports:
+      - "3000:3000"
+    links:
+      - mailhog
+    depends_on:
+      - db
+  sidekiq:
+    build:
+      context: ./dockers/api
+      dockerfile: Dockerfile
+    command: bundle exec sidekiq
+    ports:
+      - 3001:3001
+    links:
+    - redis
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./r-typing-api:/myapp
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 8025:8025
+  nginx:
+    build:
+      context: ./dockers/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - public-data:/myapp/public
+      - tmp-data:/myapp/tmp
+      - socket-data:/myapp/socket
+    ports:
+      - 80:80
+    links:
+      - api
+    depends_on:
+      - api
+  web:
+    build:
+      context: ./dockers/web
+      dockerfile: Dockerfile
+    volumes:
+      - ./r-typing-web/src:/src:cached
+      - node_modules:/src/node_modules
+    command: /bin/sh -c 'yarn install && yarn run dev'
+    working_dir: "/src"
+    ports:
+      - "3003:3000"
+    tty: true
+    environment:
+    - HOST=0.0.0.0
+    - port=3000
+    - CHOKIDAR_USEPOLLING=true
+
+volumes:
+  node_modules:
+  public-data:
+  tmp-data:
+  socket-data:
+  log-data:
