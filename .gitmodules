@@ -1,6 +1,6 @@
 [submodule "r-typing-web"]
 	path = r-typing-web
 	url = git@github.com:reisuta/r-typing-web.git
-[submodule "r-typing-api"]
-	path = r-typing-api
-	url = git@github.com:reisuta/r-typing-api.git
+[submodule "api"]
+	path = api
+	url = git@github.com:reisuta/japanese-literature-quotation.git
