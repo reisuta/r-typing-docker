@@ -1,26 +1,29 @@
 services:
   db:
-    image: mysql:5.7.39-debian
+    image: mysql:8.0.41-debian
     volumes:
-      - ./r-typing-api/tmp/db:/var/lib/mysql
+      - ./api/tmp/db:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: jlq_development
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     platform: linux/amd64
   api:
     build:
       context: ./dockers/api
       dockerfile: Dockerfile
-    command: /bin/bash -c 'rm -rf tmp/pids/server.pid; bundle exec rails s -b 0.0.0.0'
+    command: /bin/bash -c 'rm -rf tmp/pids/server.pid; bundle exec rails s -p 4000 -b 0.0.0.0'
     stdin_open: true
     tty: true
     volumes:
-      - ./r-typing-api:/myapp
-      - public-data:/myapp/public
-      - tmp-data:/myapp/tmp
-      - socket-data:/myapp/socket
-      - log-data:/myapp/log
+      - ./api:/app
+      - public-data:/app/public
+      - tmp-data:/app/tmp
+      - socket-data:/app/socket
+      - log-data:/app/log
     ports:
-      - "3000:3000"
+      - "4000:4000"
     links:
       - mailhog
     depends_on:
@@ -37,7 +40,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./r-typing-api:/myapp
+      - ./api:/app
   redis:
     image: redis
     ports:
@@ -51,9 +54,9 @@ services:
       context: ./dockers/nginx
       dockerfile: Dockerfile
     volumes:
-      - public-data:/myapp/public
-      - tmp-data:/myapp/tmp
-      - socket-data:/myapp/socket
+      - public-data:/app/public
+      - tmp-data:/app/tmp
+      - socket-data:/app/socket
     ports:
       - 80:80
     links:
